@@ -93,9 +93,19 @@ const getFragranceByNotes = async (req, res) => {
     // Query fragrances where notes appear in top, middle, or base
     const fragrances = await Fragrance.find({
       $or: [
-        { "notes.top": { $in: notesArray } },
-        { "notes.middle": { $in: notesArray } },
-        { "notes.base": { $in: notesArray } },
+        {
+          "notes.top": { $in: notesArray.map((note) => new RegExp(note, "i")) },
+        },
+        {
+          "notes.middle": {
+            $in: notesArray.map((note) => new RegExp(note, "i")),
+          },
+        },
+        {
+          "notes.base": {
+            $in: notesArray.map((note) => new RegExp(note, "i")),
+          },
+        },
       ],
     });
 
@@ -126,7 +136,7 @@ const getFragranceByBaseNotes = async (req, res) => {
 
     // Query fragrances where notes appear in top, middle, or base
     const fragrances = await Fragrance.find({
-      "notes.base": { $in: baseArray },
+      "notes.base": { $in: baseArray.map((note) => new RegExp(note, "i")) },
     });
 
     // console.log("Fragrances found:", fragrances); // Debugging: Log found fragrances
@@ -144,6 +154,86 @@ const getFragranceByBaseNotes = async (req, res) => {
   }
 };
 
+const getFragrancesByMiddleNotes = async (req, res) => {
+  try {
+    const { middle } = req.query; // Extract the notes from query parameters
+    if (!middle) {
+      return res.status(400).json({ message: "No notes provided" });
+    }
+
+    const middleArray = middle.split(",").map((note) => note.trim()); // Convert query to an array and trim spaces
+    // console.log("Notes array:", notesArray); // Debugging: Log the notes array
+
+    // Query fragrances where notes appear in top, middle, or base
+    const fragrances = await Fragrance.find({
+      "notes.middle": { $in: middleArray.map((note) => new RegExp(note, "i")) },
+    });
+
+    // console.log("Fragrances found:", fragrances); // Debugging: Log found fragrances
+
+    if (fragrances.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No fragrances found with the specified notes" });
+    }
+
+    res.status(200).json(fragrances); // Send the found fragrances as JSON
+  } catch (error) {
+    console.error("Error fetching fragrances:", error); // Debugging: Log the error
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getFragrancesByTopNotes = async (req, res) => {
+  try {
+    const { top } = req.query; // Extract the notes from query parameters
+    if (!top) {
+      return res.status(400).json({ message: "No notes provided" });
+    }
+
+    const topArray = top.split(",").map((note) => note.trim()); // Convert query to an array and trim spaces
+    // console.log("Notes array:", notesArray); // Debugging: Log the notes array
+
+    // Query fragrances where notes appear in top, middle, or base
+    const fragrances = await Fragrance.find({
+      "notes.top": { $in: topArray.map((note) => new RegExp(note, "i")) },
+    });
+
+    // console.log("Fragrances found:", fragrances); // Debugging: Log found fragrances
+
+    if (fragrances.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No fragrances found with the specified notes" });
+    }
+
+    res.status(200).json(fragrances); // Send the found fragrances as JSON
+  } catch (error) {
+    console.error("Error fetching fragrances:", error); // Debugging: Log the error
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getFragrancesSortedByPrice = async (req, res) => {
+  try {
+    const { order } = req.query;
+
+    if (order && !["asc", "desc"].includes(order)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid sort order. Use 'asc' or 'desc'." });
+    }
+
+    const sortOrder = order === "desc" ? -1 : 1;
+
+    const fragrances = await Fragrance.find({}).sort({ price: sortOrder });
+    res.status(200).json(fragrances);
+  } catch (error) {
+    console.error("Error fetching sorted fragrances:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getAllFragrances,
   getFragranceById,
@@ -154,4 +244,7 @@ module.exports = {
   getFragranceBySeason,
   getFragranceByNotes,
   getFragranceByBaseNotes,
+  getFragrancesSortedByPrice,
+  getFragrancesByMiddleNotes,
+  getFragrancesByTopNotes,
 };
