@@ -4,12 +4,15 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 app.use(express.json());
 const fragranceRoutes = require("./routes/fragranceRoutes"); // Import the routes
+const AiFragranceRoutes = require("./routes/fragranceAiRoutes");
+s;
 app.use(express.urlencoded({ extended: false }));
 
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use("/api/fragrances", fragranceRoutes);
+app.use("/api/ai/fragrance", AiFragranceRoutes);
 mongoose
   .connect(MONGODB_URI)
   .then(async () => {
