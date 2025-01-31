@@ -17,7 +17,7 @@ The Fragrance Search API allows users to search for fragrances based on various 
 
 - **Search Fragrances**: Search for fragrances by name, brand, gender, concentration, season, and notes. Users can also add a limit to the number of results returned.
 - **AI Recommendations**: Get AI-powered fragrance recommendations based on your favorite fragrance.
-- **AI Chat**: Use AI to find fragrances based on user messages.
+- **AI-Chat**: Use AI to find fragrances based on user messages.
 
 ## Endpoints
 
