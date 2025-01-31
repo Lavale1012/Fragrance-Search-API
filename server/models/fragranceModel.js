@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const fragranceSchema = new mongoose.Schema({
   name: String,
@@ -23,5 +23,5 @@ const fragranceSchema = new mongoose.Schema({
   favorite: Boolean,
 });
 
-// Explicitly set the collection name to "fragrance-db"
-module.exports = mongoose.model("Fragrance", fragranceSchema, "fragrance-db");
+const Fragrance = mongoose.model("Fragrance", fragranceSchema, "fragrance-db");
+export default Fragrance;

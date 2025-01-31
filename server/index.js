@@ -1,30 +1,30 @@
-const express = require("express");
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+import fragranceRoutes from "./routes/fragranceRoutes.js";
+import AiFragranceRoutes from "./routes/fragranceAiRoutes.js";
+
+dotenv.config();
 const app = express();
-const mongoose = require("mongoose");
-require("dotenv").config();
-app.use(express.json());
-const fragranceRoutes = require("./routes/fragranceRoutes"); // Import the routes
-const AiFragranceRoutes = require("./routes/fragranceAiRoutes");
-s;
-app.use(express.urlencoded({ extended: false }));
 
-const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI;
+app.use(express.json()); // Middleware to parse JSON requests
+app.use(express.urlencoded({ extended: false })); // Middleware to parse URL-encoded data
 
+// Define routes
 app.use("/api/fragrances", fragranceRoutes);
 app.use("/api/ai/fragrance", AiFragranceRoutes);
+
+const PORT = process.env.PORT || process.env.ALTER_PORT; // Set the server port
+const MONGODB_URI = process.env.MONGODB_URI; // MongoDB connection URI
+
+// Connect to MongoDB
 mongoose
-  .connect(MONGODB_URI)
-  .then(async () => {
+  .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true }) // Use updated options
+  .then(() => {
     console.log("Connected to MongoDB");
 
-    // Test query directly after connection
-    // const testData = await mongoose.connection.db
-    //   .collection("fragrance-db") // Explicitly query the collection
-    //   .find({})
-    //   .toArray();
-    // console.log("Test data from DB:", testData); // Should log the existing documents
-
+    // Start the server
     app.listen(PORT, () => {
       console.log(`App listening at http://localhost:${PORT}`);
     });

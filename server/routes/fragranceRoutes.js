@@ -1,6 +1,5 @@
-const express = require("express");
-const router = express.Router(); // Import your model
-const {
+import express from "express";
+import {
   getAllFragrances,
   getFragranceById,
   getFragranceByName,
@@ -13,20 +12,21 @@ const {
   getFragrancesSortedByPrice,
   getFragrancesByMiddleNotes,
   getFragrancesByTopNotes,
-} = require("../controllers/fragranceController");
+} from "../controllers/fragranceController.js";
+
+const router = express.Router(); // Import your model
 
 // Define the GET /api/fragrances route
 router.get("/", getAllFragrances);
-router.get("/search/id/:id", getFragranceById);
-router.get("/search/name/:name", getFragranceByName);
-router.get("/search/brand/:brand", getFragranceByBrand);
-router.get("/search/gender/:gender", getFragranceByGender);
-router.get("/search/concentration/:concentration", getFragranceByConcentration);
-router.get("/search/season/:season", getFragranceBySeason);
-router.get("/search/notes", getFragranceByNotes);
-router.get("/search/notes/base", getFragranceByBaseNotes);
-router.get("/search/notes/middle", getFragrancesByMiddleNotes);
-router.get("/search/notes/top", getFragrancesByTopNotes);
-router.get("/search/sort/price", getFragrancesSortedByPrice);
-
-module.exports = router;
+router.get("/id", getFragranceById);
+router.get("/name", getFragranceByName);
+router.get("/brand", getFragranceByBrand);
+router.get("/gender", getFragranceByGender);
+router.get("/concentration", getFragranceByConcentration);
+router.get("/season", getFragranceBySeason);
+router.get("/notes", getFragranceByNotes);
+router.get("/notes/base", getFragranceByBaseNotes);
+router.get("/notes/middle", getFragrancesByMiddleNotes);
+router.get("/notes/top", getFragrancesByTopNotes);
+router.get("/sort/price", getFragrancesSortedByPrice);
+export default router;
