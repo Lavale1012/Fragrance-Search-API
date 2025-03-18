@@ -1,29 +1,34 @@
 import Fragrance from "../models/fragranceModel.js";
-import redisClient from "../redisClient.js";
+
+import {
+  getCachedData,
+  setCacheData,
+  invalidateCache,
+} from "../lib/redisClientFuntions.js";
 
 export const getAllFragrances = async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit) || 10; // Default limit to 10
-    const cacheKey = "fragrance";
+  const limit = parseInt(req.query.limit) || 10; // Use query params, default to 10
+  const cacheKey = `fragrances:all:limit-${limit}`; // Unique key based on limit
 
-    // Check if data exists in Redis cache
-    const cachedData = await redisClient.get(cacheKey);
+  try {
+    // 🔹 Step 1: Check Redis Cache
+    const cachedData = await getCachedData(cacheKey);
     if (cachedData) {
-      console.log("🚀 Fetching fragrances from Redis cache");
+      console.log("🚀 Fetching all fragrances from Redis cache");
       return res.status(200).json(JSON.parse(cachedData));
     }
 
-    // If not found in Redis, fetch from MongoDB
+    // 🔹 Step 2: Fetch Data from MongoDB
     const fragrances = await Fragrance.find({}).limit(limit);
+
     if (fragrances.length === 0) {
       return res.status(404).json({ message: "No fragrances found" });
     }
 
-    // Store in Redis with expiry (600s = 10 minutes)
-    await redisClient.setEx(`fragrances`, 600, JSON.stringify(fragrances));
+    // 🔹 Step 3: Store in Cache (Expires in 10 minutes)
+    await setCacheData(cacheKey, JSON.stringify(fragrances), 600);
 
-    console.log("📡 Fetching fragrances from MongoDB");
-    await redisClient.setEx(cacheKey, 600, JSON.stringify(fragrances));
+    console.log("📡 Fetching all fragrances from MongoDB");
     res.status(200).json(fragrances);
   } catch (error) {
     console.error("❌ Error fetching data:", error);
@@ -36,16 +41,16 @@ export const getFragranceById = async (req, res) => {
     const { id } = req.query; // ID from query
     const cacheKey = `fragrances${id}`;
 
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(cacheKey);
     if (cachedData) {
       console.log("🚀 Fetching fragrances by ID from Redis cache");
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(cachedData);
     }
     const fragrance = await Fragrance.findById(id);
     if (!fragrance) {
       return res.status(404).json({ message: "Fragrance not found" });
     }
-    await redisClient.setEx(`fragrances${id}`, 600, JSON.stringify(fragrance));
+    await setCacheData(cacheKey, fragrance);
     console.log("📡 Fetching fragrances from MongoDB");
     res.status(200).json(fragrance);
   } catch (error) {
@@ -57,13 +62,28 @@ export const getFragranceById = async (req, res) => {
 export const getFragranceByName = async (req, res) => {
   try {
     const { name } = req.query; // Name from query
+    const limit = parseInt(req.query.limit) || 10; // Default limit to 10
+    const cacheKey = `fragrances:name:${name}`;
+
     if (!name) {
       return res.status(400).json({ message: "Name is required." });
     }
-    const fragrance = await Fragrance.find({ name: new RegExp(name, "i") });
-    res.status(200).json(fragrance);
+
+    const cachedData = await getCachedData(cacheKey);
+    if (cachedData) {
+      console.log("🚀 Fetching fragrances by name from Redis cache");
+      return res.status(200).json(cachedData);
+    }
+
+    const fragrances = await Fragrance.find({
+      name: new RegExp(name, "i"),
+    }).limit(limit);
+
+    console.log("📡 Fetching fragrances from MongoDB");
+    await setCacheData(cacheKey, fragrances);
+    res.status(200).json(fragrances);
   } catch (error) {
-    console.error("Error fetching fragrance by name:", error);
+    console.error("❌ Error fetching fragrance by name:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -73,22 +93,22 @@ export const getFragranceByBrand = async (req, res) => {
     const { brand } = req.query; // Brand from query
     const limit = parseInt(req.query.limit);
     const cacheKey = `fragrances:brand:${brand}`;
-    const cachedData = await redisClient.get(cacheKey);
 
     if (!brand) {
       return res.status(400).json({ message: "Brand is required." });
     }
 
+    const cachedData = await getCachedData(cacheKey);
     if (cachedData) {
       console.log("🚀 Fetching fragrances by brand from Redis cache");
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(cachedData);
     }
     const fragrance = await Fragrance.find({
       brand: new RegExp(brand, "i"),
     }).limit(limit);
     console.log("📡 Fetching fragrances from MongoDB");
 
-    await redisClient.setEx(cacheKey, 600, JSON.stringify(fragrance));
+    await setCacheData(cacheKey, fragrance);
 
     res.status(200).json(fragrance);
   } catch (error) {
@@ -98,7 +118,6 @@ export const getFragranceByBrand = async (req, res) => {
 };
 
 export const getFragranceByGender = async (req, res) => {
-  // this one is ok
   try {
     const { gender } = req.query; // Gender from query
     const limit = parseInt(req.query.limit);
@@ -108,10 +127,10 @@ export const getFragranceByGender = async (req, res) => {
       return res.status(400).json({ message: "Gender is required." });
     }
 
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(cacheKey);
     if (cachedData) {
       console.log("🚀 Fetching fragrances by gender from Redis cache");
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(cachedData);
     }
 
     const fragrances = await Fragrance.find({
@@ -119,7 +138,7 @@ export const getFragranceByGender = async (req, res) => {
     }).limit(limit);
     console.log("📡 Fetching fragrances from MongoDB");
 
-    await redisClient.setEx(cacheKey, 600, JSON.stringify(fragrances));
+    await setCacheData(cacheKey, fragrances);
     res.status(200).json(fragrances);
   } catch (error) {
     console.error("Error fetching fragrance by gender:", error);
@@ -137,10 +156,10 @@ export const getFragranceByConcentration = async (req, res) => {
       return res.status(400).json({ message: "Concentration is required." });
     }
 
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(cacheKey);
     if (cachedData) {
       console.log("🚀 Fetching fragrances by concentration from Redis cache");
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(cachedData);
     }
 
     const fragrances = await Fragrance.find({
@@ -148,7 +167,7 @@ export const getFragranceByConcentration = async (req, res) => {
     }).limit(limit);
     console.log("📡 Fetching fragrances from MongoDB");
 
-    await redisClient.setEx(cacheKey, 600, JSON.stringify(fragrances));
+    await setCacheData(cacheKey, fragrances);
     res.status(200).json(fragrances);
   } catch (error) {
     console.error("Error fetching fragrance by concentration:", error);
@@ -157,7 +176,6 @@ export const getFragranceByConcentration = async (req, res) => {
 };
 
 export const getFragranceBySeason = async (req, res) => {
-  // this is ok
   try {
     const { season } = req.query; // Season from query
     const limit = parseInt(req.query.limit);
@@ -184,10 +202,10 @@ export const getFragranceByNotes = async (req, res) => {
       return res.status(400).json({ message: "Notes are required." });
     }
 
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(cacheKey);
     if (cachedData) {
       console.log("🚀 Fetching fragrances by notes from Redis cache");
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(cachedData);
     }
 
     const notesArray = notes.split(",").map((note) => note.trim());
@@ -210,7 +228,7 @@ export const getFragranceByNotes = async (req, res) => {
     }).limit(limit);
 
     console.log(`📡 Fetching fragrances for notes "${notes}" from MongoDB`);
-    await redisClient.setEx(cacheKey, 600, JSON.stringify(fragrances));
+    await setCacheData(cacheKey, fragrances);
     res.status(200).json(fragrances);
   } catch (error) {
     console.error("❌ Error fetching fragrance by notes:", error);
@@ -228,17 +246,12 @@ export const getFragranceByBaseNotes = async (req, res) => {
       return res.status(400).json({ message: "Base notes are required." });
     }
 
-    // Ensure Redis is connected
-    if (!redisClient.isOpen) await redisClient.connect();
-
-    // Check Redis cache
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(cacheKey);
     if (cachedData) {
       console.log("🚀 Fetching fragrances by base notes from Redis cache");
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(cachedData);
     }
 
-    // Format notes for MongoDB search
     const baseArray = base.split(",").map((note) => note.trim());
     const fragrances = await Fragrance.find({
       "notes.base": { $in: baseArray.map((note) => new RegExp(note, "i")) },
@@ -246,10 +259,7 @@ export const getFragranceByBaseNotes = async (req, res) => {
 
     console.log("📡 Fetching fragrances from MongoDB");
 
-    // Store results in Redis cache (Expire in 10 minutes)
-    if (fragrances.length > 0) {
-      await redisClient.setEx(cacheKey, 600, JSON.stringify(fragrances));
-    }
+    await setCacheData(cacheKey, fragrances);
 
     res.status(200).json(fragrances);
   } catch (error) {
@@ -268,10 +278,10 @@ export const getFragrancesByMiddleNotes = async (req, res) => {
       return res.status(400).json({ message: "Middle notes are required." });
     }
 
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(cacheKey);
     if (cachedData) {
       console.log("🚀 Fetching fragrances by middle notes from Redis cache");
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(cachedData);
     }
 
     const middleArray = middle.split(",").map((note) => note.trim());
@@ -280,7 +290,7 @@ export const getFragrancesByMiddleNotes = async (req, res) => {
     }).limit(limit);
 
     console.log("📡 Fetching fragrances from MongoDB");
-    await redisClient.setEx(cacheKey, 600, JSON.stringify(fragrances));
+    await setCacheData(cacheKey, fragrances);
     res.status(200).json(fragrances);
   } catch (error) {
     console.error("❌ Error fetching fragrance by middle notes:", error);
@@ -298,10 +308,10 @@ export const getFragrancesByTopNotes = async (req, res) => {
       return res.status(400).json({ message: "Top notes are required." });
     }
 
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(cacheKey);
     if (cachedData) {
       console.log("🚀 Fetching fragrances by top notes from Redis cache");
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(cachedData);
     }
 
     const topArray = top.split(",").map((note) => note.trim());
@@ -310,7 +320,7 @@ export const getFragrancesByTopNotes = async (req, res) => {
     }).limit(limit);
 
     console.log("📡 Fetching fragrances from MongoDB");
-    await redisClient.setEx(cacheKey, 600, JSON.stringify(fragrances));
+    await setCacheData(cacheKey, fragrances);
     res.status(200).json(fragrances);
   } catch (error) {
     console.error("❌ Error fetching fragrance by top notes:", error);
@@ -321,7 +331,7 @@ export const getFragrancesByTopNotes = async (req, res) => {
 export const getFragrancesSortedByPrice = async (req, res) => {
   try {
     const { order } = req.query;
-    const limit = parseInt(req.query.limit) || 10; // Default limit to 10
+    const limit = parseInt(req.query.limit) || 0; // Default limit to 10
     const cacheKey = `fragrances:sorted:price:${order}`;
 
     if (!["asc", "desc"].includes(order)) {
@@ -330,10 +340,10 @@ export const getFragrancesSortedByPrice = async (req, res) => {
         .json({ message: "Invalid sort order. Use 'asc' or 'desc'." });
     }
 
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(cacheKey);
     if (cachedData) {
       console.log("🚀 Fetching sorted fragrances from Redis cache");
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(cachedData);
     }
 
     const fragrances = await Fragrance.find({})
@@ -341,7 +351,7 @@ export const getFragrancesSortedByPrice = async (req, res) => {
       .limit(limit);
 
     console.log("📡 Fetching sorted fragrances from MongoDB");
-    await redisClient.setEx(cacheKey, 600, JSON.stringify(fragrances));
+    await setCacheData(cacheKey, fragrances);
     res.status(200).json(fragrances);
   } catch (error) {
     console.error("Error fetching sorted fragrances:", error);
