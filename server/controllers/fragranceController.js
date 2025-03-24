@@ -1,10 +1,6 @@
 import Fragrance from "../models/fragranceModel.js";
 
-import {
-  getCachedData,
-  setCacheData,
-  invalidateCache,
-} from "../lib/redisClientFuntions.js";
+import { getCachedData, setCacheData } from "../lib/redisClientFuntions.js";
 
 export const getAllFragrances = async (req, res) => {
   const limit = parseInt(req.query.limit) || 10; // Use query params, default to 10
