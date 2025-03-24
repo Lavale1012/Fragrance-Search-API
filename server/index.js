@@ -20,7 +20,7 @@ const MONGODB_URI = process.env.MONGODB_URI; // MongoDB connection URI
 
 // Connect to MongoDB
 mongoose
-  .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true }) // Use updated options
+  .connect(MONGODB_URI) // Use updated options, { useNewUrlParser: true, useUnifiedTopology: true }
   .then(() => {
     console.log("Connected to MongoDB");
 
