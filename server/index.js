@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: false })); // Middleware to parse URL-enc
 app.use("/api/fragrances", fragranceRoutes);
 app.use("/api/ai/fragrance", AiFragranceRoutes);
 
-const PORT = process.env.PORT || process.env.ALTER_PORT; // Set the server port
+const PORT = process.env.PORT || 10000; // Set the server port
 const MONGODB_URI = process.env.MONGODB_URI; // MongoDB connection URI
 
 // Connect to MongoDB
