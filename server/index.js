@@ -1,12 +1,15 @@
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import cors from "cors";
 
 import fragranceRoutes from "./routes/fragranceRoutes.js";
 import AiFragranceRoutes from "./routes/fragranceAiRoutes.js";
 
 dotenv.config();
 const app = express();
+
+app.use(cors());
 
 app.use(express.json()); // Middleware to parse JSON requests
 app.use(express.urlencoded({ extended: false })); // Middleware to parse URL-encoded data

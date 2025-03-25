@@ -1,6 +1,6 @@
 import React from "react";
 import { useState } from "react";
-const API_BASE_URL = "http://localhost:3003/api/fragrances";
+const API_BASE_URL = "https://fragrance-search-api.onrender.com/api/fragrances";
 const ApiExamples = () => {
   const [fragrances, setFragrances] = useState([]);
   const [loading, setLoading] = useState(false);
