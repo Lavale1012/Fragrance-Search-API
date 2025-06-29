@@ -19,11 +19,12 @@ const Overview = () => {
         </li>
         <li>
           <strong>AI Recommendations:</strong> Get AI-powered fragrance
-          recommendations based on your favorite fragrance.
+          recommendations based on your favorite fragrance. (Feature in
+          development)
         </li>
         <li>
           <strong>AI-Chat:</strong> Use AI to find fragrances based on user
-          messages.
+          messages. (Feature in development)
         </li>
       </ul>
       <h1>📖 Technologies Used</h1>

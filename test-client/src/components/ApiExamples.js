@@ -1,5 +1,6 @@
 import React from "react";
 import { useState } from "react";
+import axios from "axios";
 const API_BASE_URL = "https://fragrance-search-api.onrender.com/api/fragrances";
 const ApiExamples = () => {
   const [fragrances, setFragrances] = useState([]);
@@ -13,10 +14,8 @@ const ApiExamples = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`);
-      if (!response.ok) throw new Error("Failed to fetch data");
-      const data = await response.json();
-      setFragrances(data);
+      const response = await axios.get(`${API_BASE_URL}${endpoint}`);
+      setFragrances(response.data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -26,7 +25,6 @@ const ApiExamples = () => {
 
   return (
     <div>
-      {" "}
       <h2>🎯 Try API Examples</h2>
       <p>Click a button below to run an example API request:</p>
       <div className="example-buttons">
@@ -52,7 +50,7 @@ const ApiExamples = () => {
           🔍 Search by Base Notes (Vanilla)
         </button>
         <button onClick={() => runExample("/concentration?concentration=EDP")}>
-          🔍 Search by Comcentration (EDP)
+          🔍 Search by Concentration (EDP)
         </button>
         <button onClick={() => runExample("/sort/price?order=asc")}>
           🔍 Sort by Price (Low to High)
@@ -89,9 +87,18 @@ const ApiExamples = () => {
                 <strong>Gender:</strong> {fragrance.gender}
               </p>
               <p>
-                <strong>Notes:</strong>{" "}
+                <strong>Notes:</strong>
+                <br />
+                <strong>Top:</strong>{" "}
                 {fragrance.notes?.top?.join(", ") || "N/A"}
+                <br />
+                <strong>Middle:</strong>{" "}
+                {fragrance.notes?.middle?.join(", ") || "N/A"}
+                <br />
+                <strong>Base:</strong>{" "}
+                {fragrance.notes?.base?.join(", ") || "N/A"}
               </p>
+
               <a
                 href={fragrance.purchaseLink}
                 target="_blank"
