@@ -15,8 +15,8 @@ app.use(express.json()); // Middleware to parse JSON requests
 app.use(express.urlencoded({ extended: false })); // Middleware to parse URL-encoded data
 
 // Define routes
-app.use("/api/fragrances", fragranceRoutes);
-app.use("/api/ai/fragrance", AiFragranceRoutes);
+app.use("/v1/api/fragrances", fragranceRoutes);
+app.use("/v1/api/ai/fragrances", AiFragranceRoutes);
 
 const PORT = process.env.PORT || 10000; // Set the server port
 const MONGODB_URI = process.env.MONGODB_URI; // MongoDB connection URI
