@@ -18,18 +18,31 @@ export const AIFragranceRecommendations = async (req, res) => {
       });
     }
 
+    if (typeof favoriteFragrance !== "string" || favoriteFragrance.length < 2) {
+      return res.status(400).json({
+        message: "Please provide a valid fragrance name.",
+      });
+    }
+
     console.log("Received favorite fragrance:", favoriteFragrance);
 
-    // Use OpenAI to analyze fragrance profiles
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "user",
-          content: `Given the fragrance "${favoriteFragrance}", recommend 5 similar fragrances based on scent profiles and notes.`,
-        },
-      ],
-    });
+    // Use OpenAI to analyze fragrance profiles with timeout
+    const completion = await Promise.race([
+      openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
+            content: `Given the fragrance "${favoriteFragrance}", recommend 5 similar fragrances based on scent profiles and notes. Format as a numbered list, also include links to buy each fragrance.`,
+          },
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout")), 30000)
+      ),
+    ]);
 
     // Parse AI response
     const recommendations = completion.choices[0].message.content.trim();
@@ -41,7 +54,27 @@ export const AIFragranceRecommendations = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in AI recommendations:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+
+    if (error.message === "Request timeout") {
+      return res
+        .status(408)
+        .json({ message: "Request timeout - please try again" });
+    }
+
+    if (error.status === 401) {
+      return res.status(500).json({ message: "OpenAI authentication error" });
+    }
+
+    if (error.status === 429) {
+      return res
+        .status(429)
+        .json({ message: "Too many requests - please wait and try again" });
+    }
+
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 
